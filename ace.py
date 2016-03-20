@@ -3,6 +3,7 @@ import argparse
 import glob
 import json
 import os
+import shutil
 import subprocess
 import sys
 import time
@@ -19,16 +20,51 @@ def main(argv):
 
 # Build in the current directory based on ace.json
 def build_ace(args):
-    print "-- Building with ACE"
     ace = json.load(open("ace.json"))
-    pprint(ace)
-    {
-        'program': build_ace_program(ace,args)
-    }.get(ace['type'])
+    if not 'include_dirs' in ace:
+        ace['include_dirs'] = [];
+    ace['need_link'] = False;
+        
+    if os.path.isdir("include") :
+        ace['include_dirs'].append("include")
+        
+    print "-- Building %s with ACE" %ace['type']
+    if ace['type'] == 'program' :
+        build_ace_program(ace,args)
+    elif ace['type'] == 'library' :
+        build_ace_library(ace,args)
+    elif ace['type'] == 'container' :
+        build_ace_container(args)
+    else:
+        print "unrecognized type"
 
+    
 # Build ace program
 def build_ace_program(ace,args):
     print "-- Building program with ACE"
+    source_modules=[]
+    object_modules=[]
+    if 'dependencies' in ace :
+        for dependency in ace['dependencies']:
+            path = "~/.ace/%s/include" %dependency['name']
+            path = os.path.expanduser(path)
+            ace['include_dirs'].append(path)
+    for root, dirs, files in os.walk("."):
+        for file in files:
+            if file.endswith(".cpp") or file.endswith(".cxx") :
+                source_modules.append(os.path.join(root,file))
+    pprint(source_modules)
+    object_modules=[];
+    for file in source_modules:
+        object_modules.append(compile_module(ace,args,file))
+    if not os.path.exists(ace['target']):
+        ace['need_link'] = True
+    if ace['need_link'] :
+        link(ace,args,object_modules)
+
+# Build an ace library
+def build_ace_library(ace,args):
+    print "-- Building library with ACE"
     source_modules=[]
     object_modules=[]
     for root, dirs, files in os.walk("."):
@@ -39,14 +75,31 @@ def build_ace_program(ace,args):
     object_modules=[];
     for file in source_modules:
         object_modules.append(compile_module(ace,args,file))
-    link(ace,args,object_modules)
+    if not os.path.exists("%s.a" %ace['target']):
+        ace['need_link'] = True
+
+    path = "~/.ace/%s" %ace['name']
+    path = os.path.expanduser(path)
+    if ace['need_link'] :
+        shutil.rmtree(path)
+        archive(ace,args,object_modules)
+        os.makedirs(path)
+        shutil.copytree("include" , "%s/include" %(path))
+        shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
+        json.dump(ace,open("%s/ace.json" %path,"w"))
     
 # Build in the current directory, based on it being just a container of other projects
-def build_container(args):
+def build_ace_container(args):
     print "-- Building as container"
-    for root, dirs, files in os.walk("."):
-        for dir in dirs:
-            descend(args,dir)
+    for item in os.listdir("."):
+        if not item.startswith('.') :
+            if os.path.isdir(item) :
+                descend(args,item)
+
+def build_make(args):
+    print "-- Building make project"
+    make_args=["make"]
+    subprocess.call(make_args)
 
 # Build in the current directory
 def build(args):
@@ -56,7 +109,7 @@ def build(args):
         return build_make(args);
     if os.path.exists("pom.xml"):
         return build_maven(args);
-    return build_container(args);
+    return build_ace_container(args);
 
 # Descend into a directory and continue building there.
 def descend(args,target_dir):
@@ -68,6 +121,7 @@ def descend(args,target_dir):
         build(args);
     finally:
         if not(target_dir == '.'):
+            os.chdir("..")
             print "Leaving directory `" + target_dir + "'"
 
 def replace_extension(filename,new_extension) :
@@ -84,8 +138,10 @@ def read_dependency_file(filename):
             line = line[colon+1:].strip()
         if line.endswith('\\'):
             line = line[:-1].strip()
-            #print line        
-        result.append(line.strip())
+            #print line
+        dependencies = line.split()
+        for dependency in dependencies:
+            result.append(dependency.strip())
     return result
 
 def module_needs_compile(ace,args,path) :
@@ -134,13 +190,18 @@ def compile_module(ace,args,path):
         return target_file
     print "-- Compiling: " + path
     compiler_args=["g++"];
+    compiler_args.append("-std=c++14")
     compiler_args.append("-MD") # generate .d file
     compiler_args.append("-c") # compile, too!
     compiler_args.append("-o")
     compiler_args.append(target_file)
+    for include_path in ace['include_dirs']:
+        compiler_args.append("-I%s" %include_path);
     compiler_args.append(path)
     pprint(compiler_args)
     subprocess.call(compiler_args)
+    ace['need_link'] = True
+    pprint(ace)
     return target_file
 
 # Link an ace program
@@ -148,6 +209,21 @@ def link(ace,args,objects):
     linker_args=["g++"];
     linker_args.append("-o")
     linker_args.append(ace['target'])
+    for object in objects:
+        linker_args.append(object)
+    if 'dependencies' in ace :
+        for dependency in ace['dependencies'] :
+            linker_args.append("-Wl,-force_load")
+            dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+            pprint(dependency_ace)
+            linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
+    pprint(linker_args)
+    subprocess.call(linker_args)
+
+def archive(ace,args,objects):
+    linker_args=["ar"];
+    linker_args.append("-rcs")
+    linker_args.append("%s.a" %ace['target'])
     for object in objects:
         linker_args.append(object)
     pprint(linker_args)
