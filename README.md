@@ -14,3 +14,11 @@ doing this for some reason.)
 I want it to fall back to make, maven, etc., when it descends into
 directories which aren't yet ACE friendly.
 
+## Installation
+
+Couldn't be much simpler:
+
+```bash
+$ git clone https://github.com/earlye/ace
+$ ln -s ace/ace /usr/local/bin/ace
+```
