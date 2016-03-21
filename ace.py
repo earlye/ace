@@ -21,7 +21,6 @@ def main(argv):
 def run_cmd(args):
     print ' '.join(args)
     subprocess.call(args)
-
     
 # Build in the current directory based on ace.json
 def build_ace(args):
