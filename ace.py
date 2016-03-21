@@ -85,8 +85,9 @@ def build_ace_library(ace,args):
     path = "~/.ace/%s" %ace['name']
     path = os.path.expanduser(path)
     if ace['need_link'] :
-        shutil.rmtree(path)
         archive(ace,args,object_modules)
+        if os.path.isdir(path):
+            shutil.rmtree(path)
         os.makedirs(path)
         shutil.copytree("include" , "%s/include" %(path))
         shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
