@@ -18,6 +18,11 @@ def main(argv):
     args = vars(parser.parse_args(argv))
     descend(args,args['build_dir']);    
 
+def run_cmd(args):
+    print ' '.join(args)
+    subprocess.call(args)
+
+    
 # Build in the current directory based on ace.json
 def build_ace(args):
     ace = json.load(open("ace.json"))
@@ -99,7 +104,7 @@ def build_ace_container(args):
 def build_make(args):
     print "-- Building make project"
     make_args=["make"]
-    subprocess.call(make_args)
+    run_cmd(make_args)
 
 # Build in the current directory
 def build(args):
@@ -198,10 +203,8 @@ def compile_module(ace,args,path):
     for include_path in ace['include_dirs']:
         compiler_args.append("-I%s" %include_path);
     compiler_args.append(path)
-    pprint(compiler_args)
-    subprocess.call(compiler_args)
+    run_cmd(compiler_args)
     ace['need_link'] = True
-    pprint(ace)
     return target_file
 
 # Link an ace program
@@ -215,10 +218,9 @@ def link(ace,args,objects):
         for dependency in ace['dependencies'] :
             linker_args.append("-Wl,-force_load")
             dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
-            pprint(dependency_ace)
+            # pprint(dependency_ace)
             linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
-    pprint(linker_args)
-    subprocess.call(linker_args)
+    run_cmd(linker_args)
 
 def archive(ace,args,objects):
     linker_args=["ar"];
@@ -226,8 +228,7 @@ def archive(ace,args,objects):
     linker_args.append("%s.a" %ace['target'])
     for object in objects:
         linker_args.append(object)
-    pprint(linker_args)
-    subprocess.call(linker_args)
+    run_cmd(linker_args)
     
 if __name__ == "__main__":
     main(sys.argv[1:])
