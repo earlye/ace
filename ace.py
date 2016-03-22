@@ -32,7 +32,7 @@ def build_ace(args):
     if os.path.isdir("include") :
         ace['include_dirs'].append("include")
         
-    print "-- Building %s with ACE" %ace['type']
+    print "-- Building \"%s\" with ACE" %ace['type']
     if ace['type'] == 'program' :
         build_ace_program(ace,args)
     elif ace['type'] == 'library' :
@@ -82,16 +82,19 @@ def build_ace_library(ace,args):
     if not os.path.exists("%s.a" %ace['target']):
         ace['need_link'] = True
 
-    path = "~/.ace/%s" %ace['name']
-    path = os.path.expanduser(path)
     if ace['need_link'] :
         archive(ace,args,object_modules)
-        if os.path.isdir(path):
-            shutil.rmtree(path)
-        os.makedirs(path)
-        shutil.copytree("include" , "%s/include" %(path))
-        shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
-        json.dump(ace,open("%s/ace.json" %path,"w"))
+
+    # install the library in ~/.ace/
+    path = "~/.ace/%s" %ace['name']
+    print "Installing library to %s" %path
+    path = os.path.expanduser(path)
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+    os.makedirs(path)
+    shutil.copytree("include" , "%s/include" %(path))
+    shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
+    json.dump(ace,open("%s/ace.json" %path,"w"))
     
 # Build in the current directory, based on it being just a container of other projects
 def build_ace_container(args):
