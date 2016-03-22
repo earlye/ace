@@ -87,14 +87,16 @@ def build_ace_library(ace,args):
 
     # install the library in ~/.ace/
     path = "~/.ace/%s" %ace['name']
-    print "Installing library to %s" %path
     path = os.path.expanduser(path)
+    print "Installing library to %s" %path
     if os.path.isdir(path):
         shutil.rmtree(path)
     os.makedirs(path)
     shutil.copytree("include" , "%s/include" %(path))
     shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
     json.dump(ace,open("%s/ace.json" %path,"w"))
+    run_cmd(["find", path, "-type" , "f"])
+    
     
 # Build in the current directory, based on it being just a container of other projects
 def build_ace_container(args):
