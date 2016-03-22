@@ -226,9 +226,12 @@ def link(ace,args,objects):
     run_cmd(linker_args)
 
 def archive(ace,args,objects):
+    target="%s.a" %ace['target']
+    if os.path.exists(target):
+        os.remove(target)
     linker_args=["ar"];
     linker_args.append("-rcs")
-    linker_args.append("%s.a" %ace['target'])
+    linker_args.append(target)
     for object in objects:
         linker_args.append(object)
     run_cmd(linker_args)
