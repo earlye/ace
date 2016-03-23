@@ -22,3 +22,18 @@ Couldn't be much simpler:
 $ git clone https://github.com/earlye/ace
 $ ln -s ace/ace /usr/local/bin/ace
 ```
+
+## Troubleshooting
+Note that git symlinks must be enabled; otherwise, `ace/ace` will be
+a text file containing `ace.py`. Git symlinks should be enabled by default.
+To force git symlinks to be enabled, run this:
+
+```bash
+git config --global core.symlinks true
+```
+
+To force them back to their default value:
+
+```bash
+git config --global --unset core.symlinks
+```
