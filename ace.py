@@ -11,10 +11,11 @@ import time
 from pprint import pprint
 
 # Parse arguments and begin the build.
-def main(argv):
+def main(argv):    
     parser = argparse.ArgumentParser()
     parser.add_argument('-d','--dir',dest='build_dir',default='.',help='directory to build in.');
     parser.add_argument('-r','--rebuild',dest='rebuild',action='store_true',default=False,help='Rebuild everything.');
+    parser.add_argument('-nc','--no-clone-missing',dest='clone-missing',action='store_false',default=True,help='Disable clone of missing repos when building containers.');
     args = vars(parser.parse_args(argv))
     descend(args,args['build_dir']);    
 
@@ -38,7 +39,7 @@ def build_ace(args):
     elif ace['type'] == 'library' :
         build_ace_library(ace,args)
     elif ace['type'] == 'container' :
-        build_ace_container(args)
+        build_ace_container(args,ace)
     else:
         print "unrecognized type"
 
@@ -99,8 +100,21 @@ def build_ace_library(ace,args):
     
     
 # Build in the current directory, based on it being just a container of other projects
-def build_ace_container(args):
-    print "-- Building as container"
+def build_ace_container(args,ace):
+    print "-- Building as ace container"
+    if args['clone-missing'] and not ace == None and 'modules' in ace:
+        print "-- checking for missing repos"
+        for module in ace['modules']:
+            if not os.path.isdir(module):
+                moduleDefinition = ace['modules'][module];
+                print "--- Need to clone module:" + module
+                if "git-remotes" in  moduleDefinition:
+                    if not "origin" in moduleDefinition["git-remotes"]:
+                        raise Exception("Module \"" + module + "\" has git-remotes info, but no origin. Could not clone it.")
+                    run_cmd(["git","clone",moduleDefinition["git-remotes"]["origin"],module]);
+                else:
+                    raise Exception("Module \"" + module + "\" has no repository info and is missing. Could not clone it.")
+        
     for item in os.listdir("."):
         if not item.startswith('.') :
             if os.path.isdir(item) :
@@ -119,7 +133,7 @@ def build(args):
         return build_make(args);
     if os.path.exists("pom.xml"):
         return build_maven(args);
-    return build_ace_container(args);
+    return build_ace_container(args,None);
 
 # Descend into a directory and continue building there.
 def descend(args,target_dir):
