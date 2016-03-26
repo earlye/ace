@@ -1,5 +1,6 @@
 #!/usr/bin/python
 import argparse
+import datetime
 import glob
 import json
 import os
@@ -8,6 +9,7 @@ import subprocess
 import sys
 import time
 
+from ace_utils import *
 from pprint import pprint
 
 # Parse arguments and begin the build.
@@ -16,12 +18,9 @@ def main(argv):
     parser.add_argument('-d','--dir',dest='build_dir',default='.',help='directory to build in.');
     parser.add_argument('-r','--rebuild',dest='rebuild',action='store_true',default=False,help='Rebuild everything.');
     parser.add_argument('-nc','--no-clone-missing',dest='clone-missing',action='store_false',default=True,help='Disable clone of missing repos when building containers.');
+    pprint({"__file__":__file__,"realpath":os.path.realpath(__file__),"argv":argv})
     args = vars(parser.parse_args(argv))
     descend(args,args['build_dir']);    
-
-def run_cmd(args):
-    print ' '.join(args)
-    subprocess.call(args)
     
 # Build in the current directory based on ace.json
 def build_ace(args):
@@ -47,44 +46,84 @@ def build_ace(args):
 # Build ace program
 def build_ace_program(ace,args):
     print "-- Building program with ACE"
-    source_modules=[]
-    object_modules=[]
+    source_modules=[]    
+    source_objects=[]
+    test_modules=[]
+    test_objects=[]
+    test_methods=[]
     if 'dependencies' in ace :
         for dependency in ace['dependencies']:
             path = "~/.ace/%s/include" %dependency['name']
             path = os.path.expanduser(path)
             ace['include_dirs'].append(path)
-    for root, dirs, files in os.walk("."):
+    for root, dirs, files in os.walk("src/main"):
         for file in files:
             if file.endswith(".cpp") or file.endswith(".cxx") :
                 source_modules.append(os.path.join(root,file))
-    pprint(source_modules)
-    object_modules=[];
+    for root, dirs, files in os.walk("src/test"):
+        for file in files:
+            if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
+                test_modules.append(os.path.join(root,file))
+    pprint({"source_modules":source_modules,"test_modules":test_modules})
+    source_objects=[];
     for file in source_modules:
-        object_modules.append(compile_module(ace,args,file))
+        source_objects.append(compile_module(ace,args,file))
     if not os.path.exists(ace['target']):
         ace['need_link'] = True
     if ace['need_link'] :
-        link(ace,args,object_modules)
+        link(ace,args,source_objects)
 
+    # Build test modules...
+    for file in test_modules:
+        test_objects.append(compile_module(ace,args,file))
+    for object in test_objects:
+        scan_object_for_tests(args,object,test_methods);
+
+    nomain_source_objects = filter(nomain,source_objects)
+                                    
+    test_objects.append(generate_test_harness(ace,args,test_methods));
+    link_test_harness(ace,args,nomain_source_objects,test_objects)
+    run_cmd(["./.test_harness.exe"]);
+        
 # Build an ace library
 def build_ace_library(ace,args):
     print "-- Building library with ACE"
     source_modules=[]
-    object_modules=[]
-    for root, dirs, files in os.walk("."):
+    source_objects=[]
+    test_modules=[]
+    test_objects=[]
+    test_methods=[]
+    for root, dirs, files in os.walk("src/main"):
         for file in files:
-            if file.endswith(".cpp") or file.endswith(".cxx") :
+            if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
                 source_modules.append(os.path.join(root,file))
-    pprint(source_modules)
-    object_modules=[];
+    for root, dirs, files in os.walk("src/test"):
+        for file in files:
+            if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
+                test_modules.append(os.path.join(root,file))
+    pprint({"source_modules":source_modules,"test_modules":test_modules})
+
+    # Build source modules...
+    source_objects=[];
     for file in source_modules:
-        object_modules.append(compile_module(ace,args,file))
+        source_objects.append(compile_module(ace,args,file))
+        
     if not os.path.exists("%s.a" %ace['target']):
         ace['need_link'] = True
 
     if ace['need_link'] :
-        archive(ace,args,object_modules)
+        archive(ace,args,source_objects)
+
+    # Build test modules...
+    for file in test_modules:
+        test_objects.append(compile_module(ace,args,file))
+    for object in test_objects:
+        scan_object_for_tests(args,object,test_methods);
+
+    test_objects.append(generate_test_harness(ace,args,test_methods));
+    link_test_harness(ace,args,source_objects,test_objects)
+    run_cmd(["./.test_harness.exe"]);
+    
 
     # install the library in ~/.ace/
     path = "~/.ace/%s" %ace['name']
@@ -97,7 +136,54 @@ def build_ace_library(ace,args):
     shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
     json.dump(ace,open("%s/ace.json" %path,"w"))
     run_cmd(["find", path, "-type" , "f"])
-    
+
+def generate_test_harness(ace,args,test_methods) :
+    variables = {};
+    variables['automatically_generated'] = "Automatically generated by ACE @" + time.ctime();
+    variables['test_declarations'] = [];
+    variables['test_list'] = [];
+    for test_method in test_methods:
+        parts = filter(len,test_method.split(':'))
+        basename = parts.pop()[:-len("()")] # remove () that is definitely there due to scan_objects_for_tests
+        decl = "";
+        name = "";
+        for namespace in parts:
+            decl += "namespace " + namespace + " {"
+            name += namespace + "::";
+        decl += "extern void " + basename + "();"
+        name += basename;
+        for namespace in parts:
+            decl += "}"
+        test_struct = "{ %s, \"%s\" }" %(name,name)
+        variables['test_declarations'].append(decl)
+        variables['test_list'].append(test_struct)
+
+    variables['test_declarations']="\n".join(variables['test_declarations'])
+    variables['test_list']=",\n".join(variables['test_list'])
+
+    ace_dir=os.path.dirname(os.path.realpath(__file__))
+    template_name=os.path.join(ace_dir,"cpp_test_template.cpp")
+    template = string.Template(open(template_name).read())
+    test_harness = template.substitute(variables)
+    open(".test_harness.cpp","w").write(test_harness)
+    return compile_module(ace,args,".test_harness.cpp")
+
+def nomain(object) :
+    functions = scan_object_for_functions(object)
+    return "_main()" in functions
+
+def scan_object_for_tests(args,object,test_methods):
+    functions = scan_object_for_functions(object)
+    for function in functions :
+        if function.endswith("()") and (function.startswith("test") or "::test" in function):
+            test_methods.append(function)
+
+def scan_object_for_functions(object):
+    ace_dir=os.path.dirname(os.path.realpath(__file__))
+    method_lister=os.path.join(ace_dir,"method_list")
+    args = [method_lister,object];
+    result = run_cmd(args)
+    return result.stdout
     
 # Build in the current directory, based on it being just a container of other projects
 def build_ace_container(args,ace):
@@ -226,13 +312,25 @@ def compile_module(ace,args,path):
     ace['need_link'] = True
     return target_file
 
+def link_test_harness(ace,args,source_objects,test_objects):
+    linker_args=["g++"]
+    linker_args.extend(["-o",".test_harness.exe"]) #,".test_harness.o"])
+    linker_args.extend(source_objects)
+    linker_args.extend(test_objects)
+    if 'dependencies' in ace :
+        for dependency in ace['dependencies'] :
+            linker_args.append("-Wl,-force_load")
+            dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+            # pprint(dependency_ace)
+            linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
+    run_cmd(linker_args)
+
 # Link an ace program
 def link(ace,args,objects):
     linker_args=["g++"];
     linker_args.append("-o")
     linker_args.append(ace['target'])
-    for object in objects:
-        linker_args.append(object)
+    linker_args.extend(objects)
     if 'dependencies' in ace :
         for dependency in ace['dependencies'] :
             linker_args.append("-Wl,-force_load")
