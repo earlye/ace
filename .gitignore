@@ -1,3 +1,4 @@
+.*
 *.o
 *.d
 demos/hello-world/hello-world
