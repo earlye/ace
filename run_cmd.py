@@ -10,14 +10,14 @@ class RunCmdResult(object):
         self.retCode = 0;
         self.stdout = [];
         self.stderr = [];
-    def addStdOut(self,lines,echo=True):
+    def addStdOut(self,lines,echo):
         if (len(lines)==0):
             return;
         lines = map(lambda line: line.rstrip('\n'),lines)
         if (echo):
             print("\n".join(lines), file=sys.stdout)
         self.stdout.extend(lines)
-    def addStdErr(self,lines,echo=True):
+    def addStdErr(self,lines,echo):
         if (len(lines)==0):
             return;
         lines = map(lambda line: line.rstrip('\n'),lines)
@@ -25,8 +25,9 @@ class RunCmdResult(object):
             print("\n".join(lines), file=sys.stderr)
         self.stderr.extend(lines)
 
-def run_cmd(args,throwOnNonZero = True):
-    print(' '.join(args))
+def run_cmd(args,throwOnNonZero = True,echo=True):
+    if echo:
+        print(' '.join(args))
     # set the use show window flag, might make conditional on being in Windows:
     if platform.system() == 'Windows':
         startupinfo = subprocess.STARTUPINFO()
@@ -43,12 +44,12 @@ def run_cmd(args,throwOnNonZero = True):
     result = RunCmdResult();
     while(True):
         result.retCode = p.poll()
-        result.addStdOut(p.stdout.readlines(1024))
-        result.addStdErr(p.stderr.readlines(1024))
+        result.addStdOut(p.stdout.readlines(1024),echo)
+        result.addStdErr(p.stderr.readlines(1024),echo)
         if (result.retCode is not None):
             # Append any additional lines
-            result.addStdOut(p.stdout.readlines())
-            result.addStdErr(p.stderr.readlines())
+            result.addStdOut(p.stdout.readlines(),echo)
+            result.addStdErr(p.stderr.readlines(),echo)
             break;
 
     if (throwOnNonZero and result.retCode != 0):
