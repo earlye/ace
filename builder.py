@@ -251,7 +251,7 @@ class Builder(object) :
             print( "-- %s needs compile. Source timestamp > Target timestamp" %path )
             return True
 
-        dependencies = read_dependency_file(dependency_file)
+        dependencies = self.read_dependency_file(dependency_file)
         for dependency in dependencies:
             if not os.path.exists(dependency) :
                 print( "-- Module needs compile: \"%s\" does not exist" %dependency )
