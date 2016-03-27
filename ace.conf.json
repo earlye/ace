@@ -1,0 +1,15 @@
+{
+    "g++-version-map" : {
+	"Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.29",
+	"g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
+	"default" : "g++-4.8.4"
+    },
+    "g++-versions" : {
+	"g++-4.8.4" : {
+	    "options": [ "-std=c++1y" ]
+	},
+	"clang-703.0.29" : {
+	    "options" : [ "-std=c++14" ]
+	}
+    }
+}
