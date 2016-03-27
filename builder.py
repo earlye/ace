@@ -283,8 +283,8 @@ class Builder(object) :
     def scan_object_for_functions(self,object):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         method_lister=os.path.join(ace_dir,"method_list")
-        args = [method_lister,object];
-        result = run_cmd(args)
+        args = [method_lister,object];        
+        result = run_cmd(args,echo=True)
         return result.stdout
                 
     def generate_test_harness(self,ace,test_methods) :
@@ -325,11 +325,12 @@ class Builder(object) :
         linker_args.extend(test_objects)
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
-                linker_args.append("-Wl,-force_load")
+                linker_args.extend(self.gpp['library-options'])
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
-        run_cmd(linker_args)
+        linker_args.extend(self.gpp['linker-final-options'])
+        run_cmd(linker_args,echo=True)
     
     # Build ace program
     def build_ace_program(self,ace):
@@ -406,9 +407,10 @@ class Builder(object) :
         linker_args.extend(objects)
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
-                linker_args.append("-Wl,-force_load")
+                linker_args.extend(self.gpp['library-options'])
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
+        linker_args.extend(self.gpp['linker-final-options'])
         run_cmd(linker_args)
 

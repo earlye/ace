@@ -6,10 +6,14 @@
     },
     "g++-versions" : {
 	"g++-4.8.4" : {
-	    "options": [ "-std=c++1y" ]
+	    "options": [ "-std=c++1y" ],
+	    "library-options" : [ "-Wl,--whole-archive" ],
+	    "linker-final-options" : [ "-Wl,--no-whole-archive" ]
 	},
 	"clang-703.0.29" : {
-	    "options" : [ "-std=c++14" ]
+	    "options" : [ "-std=c++14" ],
+	    "library-options" : [ "-Wl,-force_load" ],
+	    "linker-final-options" : [ ]
 	}
     }
 }

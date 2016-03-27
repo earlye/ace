@@ -1,5 +1,6 @@
 from __future__ import print_function
 
+import os
 import platform
 import string
 import subprocess
@@ -38,7 +39,7 @@ def run_cmd(args,throwOnNonZero = True,echo=True):
     p=subprocess.Popen(args,
                              stdout=subprocess.PIPE,
                              stderr=subprocess.PIPE,
-                             stdin=subprocess.PIPE,
+                             stdin=open(os.devnull), # subprocess.PIPE,
                              startupinfo=startupinfo)
 
     result = RunCmdResult();
