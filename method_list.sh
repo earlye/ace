@@ -5,11 +5,11 @@ case "$(uname)" in
 	;;
 
     'Linux') # UBUNTU: Linux
-	nm -g --defined-only src/test/test_basic_component.o | sed -r "s/^.{19}//" | c++filt
+	nm -g --defined-only $1 | sed -r "s/^.{19}//" | c++filt
 	;;
 
     *) # DEFAULT
-	nm -g --defined-only src/test/test_basic_component.o | sed -r "s/^.{19}//" | c++filt
+	nm -g --defined-only $1 | sed -r "s/^.{19}//" | c++filt
 	;;
 esac
 
