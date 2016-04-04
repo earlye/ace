@@ -183,7 +183,7 @@ class Builder(object) :
         for file in source_modules:
             source_objects.append(self.compile_module(ace,file))
 
-        if len(source_objects) and not os.path.exists("%s.a" %ace['target']):
+        if len(source_objects) or not os.path.exists("%s.a" %ace['target']):
             ace['need_link'] = True
 
         archive = None
@@ -294,7 +294,7 @@ class Builder(object) :
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         method_lister=os.path.join(ace_dir,"method_list")
         args = [method_lister,object];        
-        result = run_cmd(args,echo=True)
+        result = run_cmd(args,echo=False)
         return result.stdout
                 
     def generate_test_harness(self,ace,test_methods) :
