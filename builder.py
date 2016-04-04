@@ -120,13 +120,20 @@ class Builder(object) :
         
         if os.path.isdir("include") :
             ace['include_dirs'].append("include")
-        
-        print( "-- Building \"%s\" with ACE" %ace['type'] )
-        if ace['type'] == 'program' :
+
+        if 'dependencies' in ace :
+            for dependency in ace['dependencies']:
+                path = "~/.ace/%s/include" %dependency['name']
+                path = os.path.expanduser(path)
+                ace['include_dirs'].append(path)            
+            
+        aceType = ace['type']
+        print( "-- Building \"%s\" with ACE" %aceType )
+        if aceType == 'program' :
             self.build_ace_program(ace)
-        elif ace['type'] == 'library' :
+        elif aceType == 'library' :
             self.build_ace_library(ace)
-        elif ace['type'] == 'container' :
+        elif aceType == 'container' :
             self.build_ace_container(ace)
         else:
             print("unrecognized type:\"%s\"" %ace['type'])
@@ -176,11 +183,12 @@ class Builder(object) :
         for file in source_modules:
             source_objects.append(self.compile_module(ace,file))
 
-        if not os.path.exists("%s.a" %ace['target']):
+        if len(source_objects) and not os.path.exists("%s.a" %ace['target']):
             ace['need_link'] = True
 
+        archive = None
         if ace['need_link'] :
-            self.archive(ace,source_objects)
+            archive = self.archive(ace,source_objects)
 
         # Build test modules...
         for file in test_modules:
@@ -201,7 +209,8 @@ class Builder(object) :
             shutil.rmtree(path)
         os.makedirs(path)
         shutil.copytree("include" , "%s/include" %(path))
-        shutil.copyfile("%s.a" %ace['target'], "%s/%s.a" %(path,ace['target']))
+        if archive is not None:
+            shutil.copyfile("%s" %archive, "%s/%s" %(path,archive))
         json.dump(ace,open("%s/ace.json" %path,"w"))
         run_cmd(["find", path, "-type" , "f"])
 
@@ -273,6 +282,7 @@ class Builder(object) :
         for object in objects:
             linker_args.append(object)
         run_cmd(linker_args)
+        return target
     
     def scan_object_for_tests(self,object,test_methods):
         functions = self.scan_object_for_functions(object)
@@ -325,8 +335,10 @@ class Builder(object) :
         linker_args.extend(test_objects)
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
-                linker_args.extend(self.gpp['library-options'])
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+                if ('header-only' in dependency_ace) and dependency_ace['header-only']:
+                    continue;
+                linker_args.extend(self.gpp['library-options'])
                 # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
         linker_args.extend(self.gpp['linker-final-options'])
@@ -339,12 +351,7 @@ class Builder(object) :
         source_objects=[]
         test_modules=[]
         test_objects=[]
-        test_methods=[]
-        if 'dependencies' in ace :
-            for dependency in ace['dependencies']:
-                path = "~/.ace/%s/include" %dependency['name']
-                path = os.path.expanduser(path)
-                ace['include_dirs'].append(path)
+        test_methods=[]        
         for root, dirs, files in os.walk("src/main"):
             for file in files:
                 if file.endswith(".cpp") or file.endswith(".cxx") :
@@ -407,8 +414,11 @@ class Builder(object) :
         linker_args.extend(objects)
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
-                linker_args.extend(self.gpp['library-options'])
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+                if ('header-only' in dependency_ace) and dependency_ace['header-only']:
+                    continue;
+                
+                linker_args.extend(self.gpp['library-options'])
                 # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
         linker_args.extend(self.gpp['linker-final-options'])
