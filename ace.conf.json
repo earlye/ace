@@ -1,6 +1,7 @@
 {
     "g++-version-map" : {
-	"Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.29",
+	"Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.x",
+	"Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
 	"g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
 	"default" : "g++-4.8.4"
     },
@@ -10,7 +11,7 @@
 	    "library-options" : [ "-Wl,--whole-archive" ],
 	    "linker-final-options" : [ "-Wl,--no-whole-archive" ]
 	},
-	"clang-703.0.29" : {
+	"clang-703.0.x" : {
 	    "options" : [ "-std=c++14" ],
 	    "library-options" : [ "-Wl,-force_load" ],
 	    "linker-final-options" : [ ]
