@@ -135,6 +135,8 @@ class Builder(object) :
             self.build_ace_library(ace)
         elif aceType == 'container' :
             self.build_ace_container(ace)
+        elif aceType == 'make' :
+            self.build_make();
         else:
             print("unrecognized type:\"%s\"" %ace['type'])
 
@@ -341,6 +343,8 @@ class Builder(object) :
                 linker_args.extend(self.gpp['library-options'])
                 # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
+        if 'lflags' in ace:
+            linker_args.extend(ace['lflags']);
         linker_args.extend(self.gpp['linker-final-options'])
         run_cmd(linker_args,echo=True)
     
@@ -379,7 +383,7 @@ class Builder(object) :
 
         test_objects.append(self.generate_test_harness(ace,test_methods));
         self.link_test_harness(ace,nomain_source_objects,test_objects)
-        run_cmd(["./.test_harness.exe"]);
+        run_cmd(["./.test_harness.exe"], echoErr=false);
 
     def nomain(self,object) :
         functions = self.scan_object_for_functions(object)
