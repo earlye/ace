@@ -11,13 +11,19 @@ struct test
 };
 
 test tests[] = {
-$test_list
+  $test_list
 };
 
 int main(int argc, char**argv)
 {
   int fail_count = 0;
   int pass_count = 0;
+  std::cerr.copyfmt(std::cout);
+  std::cerr.clear(std::cout.rdstate());
+  std::cerr.rdbuf(std::cout.rdbuf());
+  std::clog.copyfmt(std::cout);
+  std::clog.clear(std::cout.rdstate());
+  std::clog.rdbuf(std::cout.rdbuf());
   for( auto current_test : tests )
     {
       std::cout << "--- \"" << current_test.name_ << "\"" << std::endl;
@@ -42,4 +48,3 @@ int main(int argc, char**argv)
   std::cout << fail_count << " tests FAILED" << std::endl;
   return fail_count != 0;
 };
-
