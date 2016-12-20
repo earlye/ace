@@ -367,7 +367,8 @@ class Builder(object) :
         pprint({"source_modules":source_modules,"test_modules":test_modules})
         source_objects=[];
         for file in source_modules:
-            source_objects.append(self.compile_module(ace,file))
+            source_object = self.compile_module(ace,file)
+            source_objects.append(source_object)
         if not os.path.exists(ace['target']):
             ace['need_link'] = True
         if ace['need_link'] :
@@ -383,11 +384,12 @@ class Builder(object) :
 
         test_objects.append(self.generate_test_harness(ace,test_methods));
         self.link_test_harness(ace,nomain_source_objects,test_objects)
-        run_cmd(["./.test_harness.exe"], echoErr=false);
+        run_cmd(["./.test_harness.exe"], echoErr=False);
 
     def nomain(self,object) :
         functions = self.scan_object_for_functions(object)
-        return "_main()" in functions
+        present = ("_main()" in functions) or ("_main" in functions)
+        return not present;
 
     def build_make(self):
         print( "-- Building make project" )
