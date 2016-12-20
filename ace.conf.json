@@ -14,7 +14,7 @@
 	    "linker-final-options" : [ "-Wl,--no-whole-archive" ]
 	},
 	"g++-5.3.0" : {
-	    "options": [ "-std=c++1y" ],
+	    "options": [ "-std=c++1y" , "-I~/.ace/include" ],
 	    "library-options" : [ "-lpthread", "-Wl,--whole-archive" ],
 	    "linker-final-options" : [ "-Wl,--no-whole-archive" ]
 	},
