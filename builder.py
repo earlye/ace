@@ -335,13 +335,12 @@ class Builder(object) :
         linker_args.extend(["-o",".test_harness.exe"]) #,".test_harness.o"])
         linker_args.extend(source_objects)
         linker_args.extend(test_objects)
+        linker_args.extend(self.gpp['library-options'])
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
-                linker_args.extend(self.gpp['library-options'])
-                # pprint(dependency_ace)
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
         if 'lflags' in ace:
             linker_args.extend(ace['lflags']);
