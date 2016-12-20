@@ -4,7 +4,7 @@
 	"Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.x",
 	"Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
 	"g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
-	"g++ (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204", "g++-5.3.0",
+	"g++ (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204" : "g++-5.3.0",
 	"default" : "g++-5.3.0"
     },
     "g++-versions" : {
