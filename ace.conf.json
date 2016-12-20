@@ -25,7 +25,7 @@
 	},
 	"clang-800.0.x" : {
 	    "options" : [ "-std=c++14" , "-I/usr/local/include" ],
-	    "library-options" : [ "-v", "-Wl,-force_load" ],
+	    "library-options" : [ "-Wl,-force_load" ],
 	    "linker-final-options" : [ ]
 	}
     }
