@@ -1,5 +1,6 @@
 // $automatically_generated
 #include <iostream>
+#include <typeinfo>
 
 $test_declarations
 
