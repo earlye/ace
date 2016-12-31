@@ -369,10 +369,7 @@ class Builder(object) :
         for file in source_modules:
             source_object = self.compile_module(ace,file)
             source_objects.append(source_object)
-        if not os.path.exists(ace['target']):
-            ace['need_link'] = True
-        if ace['need_link'] :
-            self.link(ace,source_objects)
+        self.link(ace,source_objects)
 
         # Build test modules...
         for file in test_modules:
@@ -414,19 +411,32 @@ class Builder(object) :
 
     # Link an ace program
     def link(self,ace,objects):
+        need_link = ace['need_link']
         linker_args=["g++"];
         linker_args.append("-o")
         linker_args.append(ace['target'])
         linker_args.extend(objects)
+        if not os.path.exists(ace['target']):
+            need_link = True
+            target_time = 0
+        else:
+            target_time = os.path.getmtime(ace['target'])
+            
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
-                
+
+                library_file = os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target']));
                 linker_args.extend(self.gpp['library-options'])
-                # pprint(dependency_ace)
-                linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
+                linker_args.append(library_file);
+                dependency_time = os.path.getmtime(library_file)
+                if dependency_time > target_time:
+                    print( "-- Needs link: %s newer than %s\n\t(%s vs %s)" %(library_file,ace['target'],dependency_time,target_time) )
+                    need_link = True;
+        
         linker_args.extend(self.gpp['linker-final-options'])
-        run_cmd(linker_args)
+        if need_link:
+            run_cmd(linker_args)
 
