@@ -385,7 +385,7 @@ class Builder(object) :
 
     def nomain(self,object) :
         functions = self.scan_object_for_functions(object)
-        present = ("_main()" in functions) or ("_main" in functions)
+        present = ("_main()" in functions) or ("_main" in functions) or ("main" in functions)
         return not present;
 
     def build_make(self):
