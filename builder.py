@@ -83,7 +83,7 @@ class Builder(object) :
 
         self.config = Builder.load_config(self.args)
         self.gpp = self.detect_gpp()
-        pprint({"self":self.__dict__})
+        # pprint({"self":self.__dict__})
 
 
     # Descend into a directory and continue building there.
@@ -178,7 +178,7 @@ class Builder(object) :
             for file in files:
                 if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
                     test_modules.append(os.path.join(root,file))
-        pprint({"source_modules":source_modules,"test_modules":test_modules})
+        # pprint({"source_modules":source_modules,"test_modules":test_modules})
 
         # Build source modules...
         source_objects=[];
@@ -220,13 +220,14 @@ class Builder(object) :
     def compile_module(self,ace,path):
         target_file = replace_extension(path,".o")
         if not self.module_needs_compile(ace,path) :
-            print( "-- Skipping: " + path )
+            # print( "-- Skipping: " + path )
             return target_file
         print( "-- Compiling: " + path )
         compiler_args=["g++"];
         compiler_args.extend(self.gpp['options'])
         compiler_args.append("-MD") # generate .d file
         compiler_args.append("-c") # compile, too!
+        compiler_args.append("-g3") # include debug symbols.
         compiler_args.append("-o")
         compiler_args.append(target_file)
         for include_path in ace['include_dirs']:
@@ -279,6 +280,7 @@ class Builder(object) :
         if os.path.exists(target):
             os.remove(target)
         linker_args=["ar"];
+        #linker_args.append("--no_warning_for_no_symbols")
         linker_args.append("-rcs")
         linker_args.append(target)
         for object in objects:
@@ -332,7 +334,7 @@ class Builder(object) :
 
     def link_test_harness(self,ace,source_objects,test_objects):
         linker_args=["g++"]
-        linker_args.extend(["-o",".test_harness.exe"]) #,".test_harness.o"])
+        linker_args.extend(["-g3","-o",".test_harness.exe"]) #,".test_harness.o"])
         linker_args.extend(source_objects)
         linker_args.extend(test_objects)
         if 'dependencies' in ace :
@@ -364,7 +366,7 @@ class Builder(object) :
             for file in files:
                 if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
                     test_modules.append(os.path.join(root,file))
-        pprint({"source_modules":source_modules,"test_modules":test_modules})
+        # pprint({"source_modules":source_modules,"test_modules":test_modules})
         source_objects=[];
         for file in source_modules:
             source_object = self.compile_module(ace,file)

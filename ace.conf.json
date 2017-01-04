@@ -26,7 +26,7 @@
 	"clang-800.0.x" : {
 	    "options" : [ "-std=c++14" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
 	    "library-options" : [ "-Wl,-force_load" ],
-	    "linker-final-options" : [ ]
+	    "linker-final-options" : []
 	}
     }
 }
