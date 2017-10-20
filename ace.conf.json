@@ -5,6 +5,7 @@
 	"Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
 	"g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
 	"g++ (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204" : "g++-5.3.0",
+	"g++ (Ubuntu 6.2.0-5ubuntu12) 6.2.0 20161005" : "g++-6.2.0",
 	"default" : "g++-5.3.0"
     },
     "g++-versions" : {
@@ -14,6 +15,11 @@
 	    "linker-final-options" : [ "-Wl,--no-whole-archive" ]
 	},
 	"g++-5.3.0" : {
+	    "options": [ "-std=c++1y" , "-I", "/var/lib/jenkins/.ace/include" , "-Wno-deprecated" ],
+	    "library-options" : [ "-Wl,--whole-archive" ],
+	    "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive" ]
+	},
+	"g++-6.2.0" : {
 	    "options": [ "-std=c++1y" , "-I", "/var/lib/jenkins/.ace/include" , "-Wno-deprecated" ],
 	    "library-options" : [ "-Wl,--whole-archive" ],
 	    "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive" ]
