@@ -347,6 +347,8 @@ class Builder(object) :
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
         if 'lflags' in ace:
             linker_args.extend(ace['lflags']);
+        if 'dependency-flags' in ace:
+            linker_args.extend(ace['dependency-flags']);
         linker_args.extend(self.gpp['linker-final-options'])
         run_cmd(linker_args,echo=True)
     
@@ -423,7 +425,8 @@ class Builder(object) :
             target_time = 0
         else:
             target_time = os.path.getmtime(ace['target'])
-            
+
+        dependency_flags = []
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
@@ -433,11 +436,13 @@ class Builder(object) :
                 library_file = os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target']));
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(library_file);
+                dependency_flags.extend(dependency_ace['dependency-flags'])
                 dependency_time = os.path.getmtime(library_file)
                 if dependency_time > target_time:
                     print( "-- Needs link: %s newer than %s\n\t(%s vs %s)" %(library_file,ace['target'],dependency_time,target_time) )
                     need_link = True;
-        
+
+        linker_args.extend(dependency_flags)
         linker_args.extend(self.gpp['linker-final-options'])
         if need_link:
             run_cmd(linker_args,echo="True")
