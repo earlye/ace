@@ -436,7 +436,8 @@ class Builder(object) :
                 library_file = os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target']));
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(library_file);
-                dependency_flags.extend(dependency_ace['dependency-flags'])
+                if 'dependency-flags' in dependency_ace:
+                    dependency_flags.extend(dependency_ace['dependency-flags'])
                 dependency_time = os.path.getmtime(library_file)
                 if dependency_time > target_time:
                     print( "-- Needs link: %s newer than %s\n\t(%s vs %s)" %(library_file,ace['target'],dependency_time,target_time) )
