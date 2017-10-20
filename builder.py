@@ -440,5 +440,5 @@ class Builder(object) :
         
         linker_args.extend(self.gpp['linker-final-options'])
         if need_link:
-            run_cmd(linker_args)
+            run_cmd(linker_args,echo="True")
 
