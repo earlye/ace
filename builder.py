@@ -342,6 +342,8 @@ class Builder(object) :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
+                if 'dependency-flags' in dependency_ace:
+                    linker_args.extend(dependency_ace['dependency-flags']);
                 ## Grab any linker options that have to be applied before including a library.
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
@@ -433,6 +435,8 @@ class Builder(object) :
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
 
+                print("-- dependency_ace:{}".format(dependency['name']))
+                pprint(dependency_ace)
                 library_file = os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target']));
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(library_file);
