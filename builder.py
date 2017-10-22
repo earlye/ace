@@ -352,7 +352,7 @@ class Builder(object) :
         if 'lflags' in ace:
             linker_args.extend(ace['lflags']);
         if 'dependency-flags' in ace:
-            dependency_flags.add(ace['dependency-flags']);
+            dependency_flags.update(ace['dependency-flags']);
 
         linker_args.extend(dependency_flags)
         linker_args.extend(self.gpp['linker-final-options'])
