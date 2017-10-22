@@ -75,6 +75,7 @@ class Builder(object) :
         #     "sys.platform":sys.platform,
         #     "platform.platform":platform.platform()
         # })
+        print("Ace version 0.2")
         parser = argparse.ArgumentParser()
         parser.add_argument('-d','--dir',dest='build_dir',default='.',help='directory to build in.');
         parser.add_argument('-r','--rebuild',dest='rebuild',action='store_true',default=False,help='Rebuild everything.');
@@ -337,20 +338,23 @@ class Builder(object) :
         linker_args.extend(["-g3","-o",".test_harness.exe"]) #,".test_harness.o"])
         linker_args.extend(source_objects)
         linker_args.extend(test_objects)
+        dependency_flags = set()
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
                 if 'dependency-flags' in dependency_ace:
-                    linker_args.extend(dependency_ace['dependency-flags']);
+                    dependency_flags.update(dependency_ace['dependency-flags'])
                 ## Grab any linker options that have to be applied before including a library.
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(os.path.expanduser("~/.ace/%s/%s.a" %(dependency['name'],dependency_ace['target'])));
         if 'lflags' in ace:
             linker_args.extend(ace['lflags']);
         if 'dependency-flags' in ace:
-            linker_args.extend(ace['dependency-flags']);
+            dependency_flags.add(ace['dependency-flags']);
+
+        linker_args.extend(dependency_flags)
         linker_args.extend(self.gpp['linker-final-options'])
         run_cmd(linker_args,echo=True)
     
@@ -428,7 +432,7 @@ class Builder(object) :
         else:
             target_time = os.path.getmtime(ace['target'])
 
-        dependency_flags = []
+        dependency_flags = set()
         if 'dependencies' in ace :
             for dependency in ace['dependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
@@ -441,7 +445,7 @@ class Builder(object) :
                 linker_args.extend(self.gpp['library-options'])
                 linker_args.append(library_file);
                 if 'dependency-flags' in dependency_ace:
-                    dependency_flags.extend(dependency_ace['dependency-flags'])
+                    dependency_flags.update(dependency_ace['dependency-flags'])
                 dependency_time = os.path.getmtime(library_file)
                 if dependency_time > target_time:
                     print( "-- Needs link: %s newer than %s\n\t(%s vs %s)" %(library_file,ace['target'],dependency_time,target_time) )
