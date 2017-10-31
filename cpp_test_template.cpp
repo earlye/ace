@@ -36,7 +36,7 @@ int main(int argc, char**argv)
         }
       catch( std::exception& e )
         {
-          std::cerr << "test \"" << current_test.name_ << "\" FAILED:\n" << typeid(e).name() << ":" << e.what() << std::endl;
+          std::cerr << "test \"" << current_test.name_ << "\" FAILED:\n" << e.what() << ":" << typeid(e).name() << std::endl;
           ++fail_count;
         }
       catch( ... )
