@@ -75,7 +75,7 @@ class Builder(object) :
         #     "sys.platform":sys.platform,
         #     "platform.platform":platform.platform()
         # })
-        print("Ace version 0.2")
+        print("Ace version 0.3")
         parser = argparse.ArgumentParser()
         parser.add_argument('-d','--dir',dest='build_dir',default='.',help='directory to build in.');
         parser.add_argument('-r','--rebuild',dest='rebuild',action='store_true',default=False,help='Rebuild everything.');
