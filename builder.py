@@ -126,7 +126,11 @@ class Builder(object) :
             for dependency in ace['dependencies']:
                 path = "~/.ace/%s/include" %dependency['name']
                 path = os.path.expanduser(path)
-                ace['include_dirs'].append(path)            
+                ace['include_dirs'].append(path)
+
+        if 'children' in ace:
+            for child in ace['children']:
+                self.descend(child)
             
         aceType = ace['type']
         print( "-- Building \"%s\" with ACE" %aceType )
@@ -229,6 +233,8 @@ class Builder(object) :
         compiler_args.append("-MD") # generate .d file
         compiler_args.append("-c") # compile, too!
         compiler_args.append("-g3") # include debug symbols.
+        compiler_args.append("-rdynamic") # Pass the flag -export-dynamic to the ELF linker, on targets that support it. This instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. This option is needed for some uses of dlopen or to allow obtaining backtraces from within a program.
+        compiler_args.append("-Werror=return-type")
         compiler_args.append("-o")
         compiler_args.append(target_file)
         for include_path in ace['include_dirs']:
@@ -335,7 +341,9 @@ class Builder(object) :
 
     def link_test_harness(self,ace,source_objects,test_objects):
         linker_args=["g++"]
-        linker_args.extend(["-g3","-o",".test_harness.exe"]) #,".test_harness.o"])
+        linker_args.extend(["-g3",
+                            "-rdynamic",
+                            "-o",".test_harness.exe"]) #,".test_harness.o"])
         linker_args.extend(source_objects)
         linker_args.extend(test_objects)
         dependency_flags = set()
@@ -423,6 +431,7 @@ class Builder(object) :
     def link(self,ace,objects):
         need_link = ace['need_link']
         linker_args=["g++"];
+        linker_args.append("-rdynamic")
         linker_args.append("-o")
         linker_args.append(ace['target'])
         linker_args.extend(objects)
