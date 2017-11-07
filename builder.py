@@ -140,10 +140,11 @@ class Builder(object) :
             ace['expandedDependencies'] = []
         print("--- expanded dependencies:{}".format(ace['expandedDependencies']))
 
-        for dependency in ace['dependencies']:
-            path = "~/.ace/%s/include" %dependency['name']
-            path = os.path.expanduser(path)
-            ace['include_dirs'].append(path)
+        if 'dependencies' in ace:
+            for dependency in ace['dependencies']:
+                path = "~/.ace/%s/include" %dependency['name']
+                path = os.path.expanduser(path)
+                ace['include_dirs'].append(path)
 
 
         if 'children' in ace:
