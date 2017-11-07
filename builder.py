@@ -34,13 +34,13 @@ class Builder(object) :
                     raise Exception('Conflict at %s' % '.'.join(path + [str(key)]))
             else:
                 a[key] = b[key]
-        return a                                            
+        return a
 
     @staticmethod
     def load_config(args):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         config_paths = [
-            os.path.join(ace_dir,"ace.conf.json"),            
+            os.path.join(ace_dir,"ace.conf.json"),
             "/usr/local/etc/ace.conf.json"
         ]
         config_paths.extend( glob.glob( "/etc/default/ace.d/*.conf.json" ) )
@@ -54,18 +54,18 @@ class Builder(object) :
 
     def detect_gpp(self) :
         gpp_version = run_cmd(["g++", "--version"], echo=False)
-        gpp_version_string = gpp_version.stdout[0]        
+        gpp_version_string = gpp_version.stdout[0]
         for key,value in self.config['g++-version-map'].iteritems():
             if key==gpp_version_string:
                 return self.config['g++-versions'][value]
         gpp_default = self.config['g++-version-map']['default']
         print("WARN: unrecognized g++ version \"%s\". Using default \"%s\" instead" %(gpp_version_string, gpp_default))
         return self.config['g++-versions'][gpp_default]
-        
+
 
     def run(self):
         self.descend(self.args['build_dir']);
-    
+
     def __init__(self,argv):
         # pprint({
         #     "__file__":__file__,
@@ -90,7 +90,7 @@ class Builder(object) :
     # Descend into a directory and continue building there.
     def descend(self,target_dir):
         if (target_dir=='.'):
-            return self.build();        
+            return self.build();
         print( "Entering directory `" + target_dir + "'", file=sys.stderr)
         try:
             os.chdir(target_dir);
@@ -109,29 +109,47 @@ class Builder(object) :
         if os.path.exists("pom.xml"):
             return self.build_maven();
         return self.build_ace_container(None);
-                
+
+    def expandDependencies(self,dependencies,destination = None):
+        print("---- expanding dependencies:{} into destination:{}".format(dependencies,destination))
+        result = destination if destination else []
+        for dependency in dependencies:
+            if not dependency in result:
+                result.append(dependency)
+                dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+                if 'dependencies' in dependency_ace:
+                    print("----- child {} dependencies:{}".format(dependency,dependency_ace['dependencies']))
+                    self.expandDependencies(dependency_ace['dependencies'],result)
+        return result
+
     # Build in the current directory based on ace.json
     def build_ace(self):
         ace = json.load(open("ace.json"))
-        
+
         if not 'include_dirs' in ace:
             ace['include_dirs'] = [];
-            
+
         ace['need_link'] = False;
-        
+
         if os.path.isdir("include") :
             ace['include_dirs'].append("include")
 
         if 'dependencies' in ace :
-            for dependency in ace['dependencies']:
-                path = "~/.ace/%s/include" %dependency['name']
-                path = os.path.expanduser(path)
-                ace['include_dirs'].append(path)
+            ace['expandedDependencies'] = self.expandDependencies(ace['dependencies'])
+        else:
+            ace['expandedDependencies'] = []
+        print("--- expanded dependencies:{}".format(ace['expandedDependencies']))
+
+        for dependency in ace['dependencies']:
+            path = "~/.ace/%s/include" %dependency['name']
+            path = os.path.expanduser(path)
+            ace['include_dirs'].append(path)
+
 
         if 'children' in ace:
             for child in ace['children']:
                 self.descend(child)
-            
+
         aceType = ace['type']
         print( "-- Building \"%s\" with ACE" %aceType )
         if aceType == 'program' :
@@ -245,7 +263,7 @@ class Builder(object) :
         run_cmd(compiler_args)
         ace['need_link'] = True
         return target_file
-        
+
     def module_needs_compile(self,ace,path) :
         if self.args['rebuild'] :
             print( "-- %s needs compile. -r specified." %path )
@@ -296,7 +314,7 @@ class Builder(object) :
             linker_args.append(object)
         run_cmd(linker_args)
         return target
-    
+
     def scan_object_for_tests(self,object,test_methods):
         functions = self.scan_object_for_functions(object)
         for function in functions :
@@ -306,7 +324,7 @@ class Builder(object) :
     def scan_object_for_functions(self,object):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         method_lister=os.path.join(ace_dir,"method_list")
-        args = [method_lister,object];        
+        args = [method_lister,object];
         result = run_cmd(args,echo=False)
         return result.stdout
 
@@ -361,7 +379,7 @@ class Builder(object) :
 
         dependency_flags = set()
         if 'dependencies' in ace :
-            for dependency in ace['dependencies'] :
+            for dependency in ace['expandedDependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
@@ -373,7 +391,7 @@ class Builder(object) :
                 if self.hasAceRunTest(libraryFile):
                     print("Using library {} for ace::run_test".format(libraryFile))
                     needRunTest = False
-                    
+
                 linker_args.append(libraryFile);
         if 'lflags' in ace:
             linker_args.extend(ace['lflags']);
@@ -384,19 +402,19 @@ class Builder(object) :
             shutil.copy(os.path.join(ace_dir,"cpp_test_run.cpp"),".test_run.cpp")
             self.compile_module(ace,".test_run.cpp")
             linker_args.append(".test_run.o")
-            
+
         linker_args.extend(dependency_flags)
         linker_args.extend(self.gpp['linker-final-options'])
         run_cmd(linker_args,echo=True)
-    
+
     # Build ace program
     def build_ace_program(self,ace):
         print( "-- Building program with ACE" )
-        source_modules=[]    
+        source_modules=[]
         source_objects=[]
         test_modules=[]
         test_objects=[]
-        test_methods=[]        
+        test_methods=[]
         for root, dirs, files in os.walk("src/main"):
             for file in files:
                 if file.endswith(".cpp") or file.endswith(".cxx") :
@@ -435,7 +453,7 @@ class Builder(object) :
         if (not present and "run_test" in oFile):
             pprint(functions)
         return present
-    
+
     def build_make(self):
         print( "-- Building make project" )
         make_args=["make"]
@@ -473,7 +491,7 @@ class Builder(object) :
 
         dependency_flags = set()
         if 'dependencies' in ace :
-            for dependency in ace['dependencies'] :
+            for dependency in ace['expandedDependencies'] :
                 dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
                 if ('header-only' in dependency_ace) and dependency_ace['header-only']:
                     continue;
@@ -494,4 +512,3 @@ class Builder(object) :
         linker_args.extend(self.gpp['linker-final-options'])
         if need_link:
             run_cmd(linker_args,echo="True")
-
