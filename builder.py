@@ -11,11 +11,14 @@ import string
 import sys
 import time
 
+from joblib import delayed, Parallel
 from pprint import pprint
 from run_cmd import run_cmd
 from utils import *
 
 
+def compileAModule(builder,ace,filename):
+    return builder.compile_module(ace,filename);
 
 class Builder(object) :
 
@@ -206,8 +209,11 @@ class Builder(object) :
 
         # Build source modules...
         source_objects=[];
-        for file in source_modules:
-            source_objects.append(self.compile_module(ace,file))
+        #for file in sorted(source_modules):
+        #    source_objects.append(self.compile_module(ace,file))
+        source_objects = Parallel(n_jobs=4)(
+            delayed(compileAModule)(self,ace,fileName)
+            for fileName in source_modules)
 
         if len(source_objects) or not os.path.exists("%s.a" %ace['target']):
             ace['need_link'] = True
