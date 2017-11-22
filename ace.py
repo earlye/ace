@@ -14,9 +14,12 @@ from run_cmd import run_cmd
 from pprint import pprint
 
 # Parse arguments and begin the build.
-def main(argv):    
-    builder = Builder(argv)
-    builder.run()
-    
+def main():
+    try:
+        builder = Builder(sys.argv[1:])
+        builder.run()
+    except:
+        return 1
+
 if __name__ == "__main__":
-    main(sys.argv[1:])
+    sys.exit( main() )
