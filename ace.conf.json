@@ -1,44 +1,44 @@
 {
     "g++-version-map" : {
-	"Apple LLVM version 8.0.0 (clang-800.0.42.1)" : "clang-800.0.x",
-	"Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.x",
-	"Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
-	"g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
-	"g++ (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204" : "g++-5.3.0",
-	"g++ (Ubuntu 5.4.0-6ubuntu1~16.04.5) 5.4.0 20160609" : "g++-5.4.0",
-	"g++ (Ubuntu 6.2.0-5ubuntu12) 6.2.0 20161005" : "g++-6.2.0",
-	"default" : "g++-5.3.0"
+        "Apple LLVM version 8.0.0 (clang-800.0.42.1)" : "clang-800.0.x",
+        "Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.x",
+        "Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
+        "g++ (Ubuntu 4.8.4-2ubuntu1~14.04.1) 4.8.4" : "g++-4.8.4",
+        "g++ (Ubuntu 5.3.0-3ubuntu1~14.04) 5.3.0 20151204" : "g++-5.3.0",
+        "g++ (Ubuntu 5.4.0-6ubuntu1~16.04.5) 5.4.0 20160609" : "g++-5.4.0",
+        "g++ (Ubuntu 6.2.0-5ubuntu12) 6.2.0 20161005" : "g++-6.2.0",
+        "default" : "g++-5.3.0"
     },
     "g++-versions" : {
-	"g++-4.8.4" : {
-	    "options": [ "-std=c++1y" ],
-	    "library-options" : [ "-Wl,--whole-archive" ],
-	    "linker-final-options" : [ "-Wl,--no-whole-archive","-lstdc++fs" ]
-	},
-	"g++-5.3.0" : {
-	    "options": [ "-std=c++1y" , "-Wno-deprecated" ],
-	    "library-options" : [ "-Wl,--whole-archive" ],
-	    "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs" ]
-	},
-	"g++-5.4.0" : {
-	    "options": [ "-std=c++1y" , "-Wno-deprecated" ],
-	    "library-options" : [ "-Wl,--whole-archive" ],
-	    "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs" ]
-	},
-	"g++-6.2.0" : {
-	    "options": [ "-std=c++1y" , "-Wno-deprecated" ],
-	    "library-options" : [ "-Wl,--whole-archive" ],
-	    "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs" ]
-	},
-	"clang-703.0.x" : {
-	    "options" : [ "-std=c++14" , "-I/usr/local/include" ],
-	    "library-options" : [ "-Wl,-force_load" ],
-	    "linker-final-options" : [ ]
-	},
-	"clang-800.0.x" : {
-	    "options" : [ "-std=c++14" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
-	    "library-options" : [ "-Wl,-force_load" ],
-	    "linker-final-options" : []
-	}
+        "g++-4.8.4" : {
+            "options": [ "-std=c++1y" , "-pg" ],
+            "library-options" : [ "-Wl,--whole-archive" ],
+            "linker-final-options" : [ "-Wl,--no-whole-archive","-lstdc++fs","-pg" ]
+        },
+        "g++-5.3.0" : {
+            "options": [ "-std=c++1y" , "-Wno-deprecated" , "-pg" ],
+            "library-options" : [ "-Wl,--whole-archive" ],
+            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg" ]
+        },
+        "g++-5.4.0" : {
+            "options": [ "-std=c++1y" , "-Wno-deprecated" , "-pg" ],
+            "library-options" : [ "-Wl,--whole-archive" ],
+            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg" ]
+        },
+        "g++-6.2.0" : {
+            "options": [ "-std=c++1y" , "-Wno-deprecated" , "-pg" ,  "-no-pie"],
+            "library-options" : [ "-Wl,--whole-archive" ],
+            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie" ]
+        },
+        "clang-703.0.x" : {
+            "options" : [ "-std=c++14" , "-I/usr/local/include" ],
+            "library-options" : [ "-Wl,-force_load" ],
+            "linker-final-options" : [ ]
+        },
+        "clang-800.0.x" : {
+            "options" : [ "-std=c++14" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
+            "library-options" : [ "-Wl,-force_load" ],
+            "linker-final-options" : []
+        }
     }
 }
