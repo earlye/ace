@@ -1,5 +1,6 @@
 {
     "g++-version-map" : {
+	"Apple LLVM version 9.0.0 (clang-900.0.39.2)" : "clang-900.0.x",
         "Apple LLVM version 8.0.0 (clang-800.0.42.1)" : "clang-800.0.x",
         "Apple LLVM version 7.3.0 (clang-703.0.29)" : "clang-703.0.x",
         "Apple LLVM version 7.3.0 (clang-703.0.31)" : "clang-703.0.x",
@@ -37,6 +38,11 @@
         },
         "clang-800.0.x" : {
             "options" : [ "-std=c++14" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
+            "library-options" : [ "-Wl,-force_load" ],
+            "linker-final-options" : []
+        },
+        "clang-900.0.x" : {
+            "options" : [ "-std=c++1z" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
             "library-options" : [ "-Wl,-force_load" ],
             "linker-final-options" : []
         }

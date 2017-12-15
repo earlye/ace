@@ -114,12 +114,17 @@ class Builder(object) :
         return self.build_ace_container(None);
 
     def expandDependencies(self,dependencies,destination = None):
-        print("---- expanding dependencies:{} into destination:{}".format(dependencies,destination))
         result = destination if destination else []
+        print("---- expanding dependencies:{} into destination:{}".format(dependencies,result))
         for dependency in dependencies:
             if not dependency in result:
                 result.append(dependency)
-                dependency_ace = json.load(open(os.path.expanduser("~/.ace/%s/ace.json" %dependency['name'])))
+                print("---- expanding dependency:{}".format(dependency))
+                dependency_ace_filename = "~/.ace/{}/ace.json".format(dependency['name'])
+                print("---- expanding dependency:{}".format(dependency_ace_filename))
+                dependency_ace_filename = os.path.expanduser(dependency_ace_filename)
+                print("---- expanding dependency:{}".format(dependency_ace_filename))
+                dependency_ace = json.load(open(dependency_ace_filename))
                 if 'dependencies' in dependency_ace:
                     print("----- child {} dependencies:{}".format(dependency,dependency_ace['dependencies']))
                     self.expandDependencies(dependency_ace['dependencies'],result)
@@ -144,7 +149,8 @@ class Builder(object) :
         print("--- expanded dependencies:{}".format(ace['expandedDependencies']))
 
         if 'dependencies' in ace:
-            for dependency in ace['dependencies']:
+            for dependency in ace['expandedDependencies']:
+                print("--- adding include path for dependency: {}".format(dependency))
                 path = "~/.ace/%s/include" %dependency['name']
                 path = os.path.expanduser(path)
                 ace['include_dirs'].append(path)
