@@ -265,6 +265,7 @@ class Builder(object) :
         compiler_args.append("-MD") # generate .d file
         compiler_args.append("-c") # compile, too!
         compiler_args.append("-g3") # include debug symbols.
+        compiler_args.append("-O3") # optimize a lot.
         compiler_args.append("-rdynamic") # Pass the flag -export-dynamic to the ELF linker, on targets that support it. This instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. This option is needed for some uses of dlopen or to allow obtaining backtraces from within a program.
         compiler_args.append("-Werror=return-type")
         compiler_args.append("-I{}".format(os.path.join(ace_dir,"include")))
