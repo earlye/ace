@@ -80,8 +80,8 @@ def run_cmd(args,throwOnNonZero = True,echo=True,echoErr=True):
     stdErrReader.join()
 
     if (throwOnNonZero and result.retCode != 0):
-        sys.stdout.flush();
-        print( result.stderr, file=sys.stderr)
-        sys.stderr.flush();
+        # sys.stdout.flush();
+        # print( result.stderr, file=sys.stderr)
+        # sys.stderr.flush();
         raise Exception("Command Exited with status=%d" %result.retCode)
     return result;
