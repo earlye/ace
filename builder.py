@@ -56,9 +56,11 @@ class Builder(object) :
         return config
 
     def detect_gpp(self) :
-        gpp_version = run_cmd(["g++", "--version"], echo=False)
+        gpp_version = run_cmd(["g++", "--version"], echo=True, echoErr=False)
         gpp_version_string = gpp_version.stdout[0]
-        for key,value in self.config['g++-version-map'].iteritems():
+        print(f"detecting g++: {gpp_version_string}")
+        print(f"config: {self.config['g++-version-map']}")
+        for key,value in self.config['g++-version-map'].items():
             if key==gpp_version_string:
                 return self.config['g++-versions'][value]
         gpp_default = self.config['g++-version-map']['default']
@@ -67,7 +69,7 @@ class Builder(object) :
 
 
     def run(self):
-        self.descend(self.args['build_dir']);
+        self.descend(self.args.build_dir);
 
     def __init__(self,argv):
         # pprint({
@@ -82,13 +84,26 @@ class Builder(object) :
         parser = argparse.ArgumentParser()
         parser.add_argument('-d','--dir',dest='build_dir',default='.',help='directory to build in.');
         parser.add_argument('-r','--rebuild',dest='rebuild',action='store_true',default=False,help='Rebuild everything.');
-        parser.add_argument('-nc','--no-clone-missing',dest='clone-missing',action='store_false',default=True,help='Disable clone of missing repos when building containers.');
-        self.args = vars(parser.parse_args(argv))
+        parser.add_argument('-c','--coverage',dest='coverage',action='store_true',default=False,help='Run coverage.');
+        parser.add_argument('-nc','--no-clone-missing',dest='clone_missing',action='store_false',default=True,help='Disable clone of missing repos when building containers.');
+        self.args = parser.parse_args(argv)
 
         self.config = Builder.load_config(self.args)
         self.gpp = self.detect_gpp()
         # pprint({"self":self.__dict__})
 
+    def generateCoverageSite(self):
+        print("Processing Coverage Data")
+
+        print("- Building trace file")
+        run_cmd(["lcov", "-c", "-d" , ".", "-o", ".test_harness.coverage"], echo=False)
+        print("- Removing library traces")
+        run_cmd(["lcov", "-r", ".test_harness.coverage", "/usr/*", "-o", ".test_harness.coverage"], echo=False)
+        run_cmd(["lcov", "-r", ".test_harness.coverage", "/Applications/*", "-o", ".test_harness.coverage"], echo=False)
+        print("- Removing test code traces")
+        run_cmd(["lcov", "-r", ".test_harness.coverage", "*/src/test/*", "-o", ".test_harness.coverage"], echo=False)
+        print("- Generating coverage site")
+        run_cmd(["genhtml", "-o", ".coverage", ".test_harness.coverage"], echo=False)
 
     # Descend into a directory and continue building there.
     def descend(self,target_dir):
@@ -177,7 +192,7 @@ class Builder(object) :
     # Build in the current directory, based on it being just a container of other projects
     def build_ace_container(self,ace):
         print( "-- Building as ace container" )
-        if self.args['clone-missing'] and not ace == None and 'modules' in ace:
+        if self.args.clone_missing and not ace == None and 'modules' in ace:
             print( "-- checking for missing repos" )
             for module in ace['modules']:
                 if not os.path.isdir(module):
@@ -190,10 +205,20 @@ class Builder(object) :
                     else:
                         raise Exception("Module \"" + module + "\" has no repository info and is missing. Could not clone it.")
 
+        print( "-- Scanning directory" )
         for item in os.listdir("."):
             if not item.startswith('.') :
                 if os.path.isdir(item) :
                     self.descend(item)
+
+    def resetCoverageData(self):
+        if self.args.coverage:
+            print("Resetting coverage data")
+            for root, dirs, files in os.walk("./"):
+                for file in files:
+                    if file.endswith(".gcda"):
+                        fullName = os.path.join(root,file)
+                        os.remove(fullName)
 
     # Build an ace library
     def build_ace_library(self,ace):
@@ -203,6 +228,7 @@ class Builder(object) :
         test_modules=[]
         test_objects=[]
         test_methods=[]
+
         for root, dirs, files in os.walk("src/main"):
             for file in files:
                 if file.endswith(".cpp") or file.endswith(".cxx") or file.endswith(".C"):
@@ -229,15 +255,21 @@ class Builder(object) :
             archive = self.archive(ace,source_objects)
 
         # Build test modules...
+        print("Running library tests")
         for file in test_modules:
             test_objects.append(self.compile_module(ace,file))
+
+        print("Scanning for test objects")
         for object in test_objects:
             self.scan_object_for_tests(object,test_methods);
 
+        print("Generating test_objects")
         test_objects.append(self.generate_test_harness(ace,test_methods));
+        print("Linking test harness")
         self.link_test_harness(ace,source_objects,test_objects)
-        run_cmd(["./.test_harness.exe"]);
 
+
+        self.runTestHarness()
 
         # install the library in ~/.ace/
         path = "~/.ace/%s" %ace['name']
@@ -252,6 +284,13 @@ class Builder(object) :
         json.dump(ace,open("%s/ace.json" %path,"w"))
         run_cmd(["find", path, "-type" , "f"])
 
+    def runTestHarness(self):
+        if self.args.coverage:
+            self.resetCoverageData()
+        run_cmd(["./.test_harness.exe"]);
+        if self.args.coverage:
+            self.generateCoverageSite()
+
     # Compile a single module
     def compile_module(self,ace,path):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
@@ -265,8 +304,10 @@ class Builder(object) :
         compiler_args.append("-MD") # generate .d file
         compiler_args.append("-c") # compile, too!
         compiler_args.append("-g3") # include debug symbols.
-        compiler_args.append("-O3") # optimize a lot.
-        compiler_args.append("-rdynamic") # Pass the flag -export-dynamic to the ELF linker, on targets that support it. This instructs the linker to add all symbols, not only used ones, to the dynamic symbol table. This option is needed for some uses of dlopen or to allow obtaining backtraces from within a program.
+        compiler_args.append("-O0") # optimize a lot.
+        if self.args.coverage:
+            compiler_args.append("--coverage") # code coverage
+
         compiler_args.append("-Werror=return-type")
         compiler_args.append("-I{}".format(os.path.join(ace_dir,"include")))
         compiler_args.append("-o")
@@ -279,7 +320,7 @@ class Builder(object) :
         return target_file
 
     def module_needs_compile(self,ace,path) :
-        if self.args['rebuild'] :
+        if self.args.rebuild :
             print( "-- %s needs compile. -r specified." %path )
             return True
 
@@ -329,26 +370,28 @@ class Builder(object) :
         run_cmd(linker_args)
         return target
 
-    def scan_object_for_tests(self,object,test_methods):
-        functions = self.scan_object_for_functions(object)
-        for function in functions :
-            if function.endswith("()") and (function.startswith("test") or "::test" in function):
-                test_methods.append(function)
+    def scan_object_for_tests(self,obj,test_methods):
+        functions = self.scan_object_for_functions(obj)
+        filteredFunctions = list(filter(lambda function: function.endswith("()") and (function.startswith("test") or "::test" in function or " test" in function), functions))
+        test_methods.extend(filteredFunctions)
 
-    def scan_object_for_functions(self,object):
+    def scan_object_for_functions(self,obj):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         method_lister=os.path.join(ace_dir,"method_list")
-        args = [method_lister,object];
+        args = [method_lister,obj];
         result = run_cmd(args,echo=False)
         return result.stdout
 
     def generate_test_harness(self,ace,test_methods) :
+        print(f"generating test harness: {test_methods}")
         variables = {};
         variables['automatically_generated'] = "Automatically generated by ACE @" + time.ctime();
         variables['test_declarations'] = [];
         variables['test_list'] = [];
         for test_method in test_methods:
-            parts = filter(len,test_method.split(':'))
+            # print(f"generating call to {test_method}")
+            parts = list(filter(len,test_method.split(':')))
+            # print(f"- parts:{parts}")
             basename = parts.pop()[:-len("()")] # remove () that is definitely there due to scan_objects_for_tests
             decl = "";
             name = "";
@@ -366,16 +409,22 @@ class Builder(object) :
         variables['test_declarations']="\n".join(variables['test_declarations'])
         variables['test_list']=",\n".join(variables['test_list'])
 
+        print("Generating test harness...")
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         template_name=os.path.join(ace_dir,"cpp_test_template.cpp")
         template = string.Template(open(template_name).read())
         test_harness = template.substitute(variables)
+        print("Writing test harness...")
         open(".test_harness.cpp","w").write(test_harness)
+        print("Building test harness...")
         return self.compile_module(ace,".test_harness.cpp")
 
     def link_test_harness(self,ace,source_objects,test_objects):
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         linker_args=["g++"]
+        if self.args.coverage:
+            linker_args.extend(["-fprofile-instr-generate",
+                                "-fcoverage-mapping"])
         linker_args.extend(["-g3",
                             "-rdynamic",
                             "-o",".test_harness.exe"]) #,".test_harness.o"])
@@ -450,11 +499,13 @@ class Builder(object) :
         for object in test_objects:
             self.scan_object_for_tests(object,test_methods);
 
+        print("removing main source objects")
         nomain_source_objects = filter(self.nomain,source_objects)
 
         test_objects.append(self.generate_test_harness(ace,test_methods));
         self.link_test_harness(ace,nomain_source_objects,test_objects)
-        run_cmd(["./.test_harness.exe"], echoErr=False);
+
+        self.runTestHarness()
 
     def nomain(self,object) :
         functions = self.scan_object_for_functions(object)

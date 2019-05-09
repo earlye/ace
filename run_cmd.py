@@ -17,17 +17,17 @@ class RunCmdResult(object):
     def addStdOut(self,lines):
         if (len(lines)==0):
             return;
-        lines = map(lambda line: line.rstrip('\n'),lines)
+        mappedLines = list(map(lambda line: line.rstrip(b'\n').decode("utf-8"),lines))
         if (self.echo):
-            print("\n".join(lines), file=sys.stdout)
-        self.stdout.extend(lines)
+            print("\n".join(mappedLines), file=sys.stdout)
+        self.stdout.extend(mappedLines)
     def addStdErr(self,lines):
         if (len(lines)==0):
             return;
-        lines = map(lambda line: line.rstrip('\n'),lines)
+        mappedLines = list(map(lambda line: line.rstrip(b'\n').decode("utf-8"),lines))
         if (self.echoStdErr):
-            print("\n".join(lines), file=sys.stderr)
-        self.stderr.extend(lines)
+            print("\n".join(mappedLines), file=sys.stderr)
+        self.stderr.extend(mappedLines)
 
 def run_cmd(args,throwOnNonZero = True,echo=True,echoErr=True):
     if echo:
