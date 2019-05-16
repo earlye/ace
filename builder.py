@@ -307,33 +307,37 @@ class Builder(object) :
 
     # Compile a single module
     def compile_module(self,ace,path):
-        ace_dir=os.path.dirname(os.path.realpath(__file__))
-        target_file = replace_extension(path,".o")
-        if not self.module_needs_compile(ace,path) :
-            # print( "-- Skipping: " + path )
-            return target_file
-        print( "-- Compiling: " + path )
-        compiler_args=["g++"];
-        compiler_args.extend(self.gpp['options'])
-        compiler_args.append("-MD") # generate .d file
-        compiler_args.append("-c") # compile, too!
-        compiler_args.append("-g3") # include debug symbols.
-        if self.args.coverage:
-            compiler_args.append("--coverage") # code coverage
-            compiler_args.append("-O0")
-        else:
-            compiler_args.append("-O3")
+        try:
+            ace_dir=os.path.dirname(os.path.realpath(__file__))
+            target_file = replace_extension(path,".o")
+            if not self.module_needs_compile(ace,path) :
+                # print( "-- Skipping: " + path )
+                return target_file
+            print( "-- Compiling: " + path )
+            compiler_args=["g++"];
+            compiler_args.extend(self.gpp['options'])
+            compiler_args.append("-MD") # generate .d file
+            compiler_args.append("-c") # compile, too!
+            compiler_args.append("-g3") # include debug symbols.
+            if self.args.coverage:
+                compiler_args.append("--coverage") # code coverage
+                compiler_args.append("-O0")
+            else:
+                compiler_args.append("-O3")
 
-        compiler_args.append("-Werror=return-type")
-        compiler_args.append("-I{}".format(os.path.join(ace_dir,"include")))
-        compiler_args.append("-o")
-        compiler_args.append(target_file)
-        for include_path in ace['include_dirs']:
-            compiler_args.append("-I%s" %include_path);
-        compiler_args.append(path)
-        run_cmd(compiler_args)
-        ace['need_link'] = True
-        return target_file
+            compiler_args.append("-Werror=return-type")
+            compiler_args.append("-I{}".format(os.path.join(ace_dir,"include")))
+            compiler_args.append("-o")
+            compiler_args.append(target_file)
+            for include_path in ace['include_dirs']:
+                compiler_args.append("-I%s" %include_path);
+            compiler_args.append(path)
+            run_cmd(compiler_args)
+            ace['need_link'] = True
+            return target_file
+        except Exception e:
+            print(f"-- Failed to build ${path}")
+            raise e
 
     def module_needs_compile(self,ace,path) :
         if self.args.rebuild :
