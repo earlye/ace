@@ -335,8 +335,9 @@ class Builder(object) :
             run_cmd(compiler_args)
             ace['need_link'] = True
             return target_file
-        except Exception e:
+        except Exception as e:
             print(f"-- Failed to build ${path}")
+            print(e)
             raise e
 
     def module_needs_compile(self,ace,path) :
