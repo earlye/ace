@@ -245,12 +245,12 @@ class Builder(object) :
         #for file in sorted(source_modules):
         #    source_objects.append(self.compile_module(ace,file))
 
-        print(f"Compiling source modules")
+        print("Compiling source modules")
         source_objects = Parallel(n_jobs=4)(
             delayed(compileAModule)(self,ace,fileName)
             for fileName in source_modules)
 
-        print(f"Linking library")
+        print("Linking library")
         if len(source_objects) or not os.path.exists("%s.a" %ace['target']):
             ace['need_link'] = True
 
