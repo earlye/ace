@@ -117,7 +117,7 @@ class Builder(object) :
         finally:
             if not(target_dir == '.'):
                 os.chdir("..")
-                print( "Leaving directory `" + target_dir + "'", file=sys.stderr)
+                print( "\n\nLeaving directory `" + target_dir + "'", file=sys.stderr)
 
     # Build in the current directory
     def build(self):
