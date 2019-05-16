@@ -336,7 +336,7 @@ class Builder(object) :
             ace['need_link'] = True
             return target_file
         except Exception as e:
-            print(f"-- Failed to build ${path}")
+            print(f"-- Failed to build {path}")
             print(e)
             raise e
 
