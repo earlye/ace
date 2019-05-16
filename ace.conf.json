@@ -10,6 +10,7 @@
         "g++ (Ubuntu 5.4.0-6ubuntu1~16.04.5) 5.4.0 20160609" : "g++-5.4.0",
         "g++ (Ubuntu 5.4.0-6ubuntu1~16.04.9) 5.4.0 20160609" : "g++-5.4.0",
         "g++ (Ubuntu 6.2.0-5ubuntu12) 6.2.0 20161005" : "g++-6.2.0",
+        "g++ (Ubuntu 8.3.0-6ubuntu1~18.10) 8.3.0": "g++-8.3.0",
         "default" : "g++-5.3.0"
     },
     "g++-versions" : {
@@ -29,6 +30,13 @@
             "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg", "-rdynamic" ]
         },
         "g++-6.2.0" : {
+            "options": [ "-std=c++17" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
+            "library-options" : [ "-Wl,--whole-archive" ],
+            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ],
+            "linker-coverage-args" : ["--coverage", "-lgcov" ],
+            "linker-profiler-args" : ["-fprofile-generate"]           
+        },
+        "g++-8.3.0" : {
             "options": [ "-std=c++17" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
             "library-options" : [ "-Wl,--whole-archive" ],
             "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ],
