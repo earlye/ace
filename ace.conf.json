@@ -29,7 +29,7 @@
             "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg", "-rdynamic" ]
         },
         "g++-6.2.0" : {
-            "options": [ "-std=c++1y" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
+            "options": [ "-std=c++17" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
             "library-options" : [ "-Wl,--whole-archive" ],
             "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ]
         },

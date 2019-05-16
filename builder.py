@@ -62,6 +62,7 @@ class Builder(object) :
         print(f"config: {self.config['g++-version-map']}")
         for key,value in self.config['g++-version-map'].items():
             if key==gpp_version_string:
+                print("Found g++ version \"%s\"" %(gpp_version_string))
                 return self.config['g++-versions'][value]
         gpp_default = self.config['g++-version-map']['default']
         print("WARN: unrecognized g++ version \"%s\". Using default \"%s\" instead" %(gpp_version_string, gpp_default))
@@ -277,11 +278,21 @@ class Builder(object) :
         print( "Installing library to %s" %path )
         if os.path.isdir(path):
             shutil.rmtree(path)
+        print( "Making directory %s" %path )
         os.makedirs(path)
-        shutil.copytree("include" , "%s/include" %(path))
+        print( "Copying includes to %s/include" %path )
+        try:
+            shutil.copytree("include" , "%s/include" %(path))
+        except Exception as e:
+            print("Well, that sucks.")
+            print(e)
+        print ("Done with that...")
         if archive is not None:
+            print( "Copying archive to %s/%s" %(path,archive) )
             shutil.copyfile("%s" %archive, "%s/%s" %(path,archive))
+        print ("Dumping ace.json...")
         json.dump(ace,open("%s/ace.json" %path,"w"))
+        print ("Running find...")
         run_cmd(["find", path, "-type" , "f"])
 
     def runTestHarness(self):
@@ -304,9 +315,11 @@ class Builder(object) :
         compiler_args.append("-MD") # generate .d file
         compiler_args.append("-c") # compile, too!
         compiler_args.append("-g3") # include debug symbols.
-        compiler_args.append("-O0") # optimize a lot.
         if self.args.coverage:
             compiler_args.append("--coverage") # code coverage
+            compiler_args.append("-O0")
+        else:
+            compiler_args.append("-O3")
 
         compiler_args.append("-Werror=return-type")
         compiler_args.append("-I{}".format(os.path.join(ace_dir,"include")))
