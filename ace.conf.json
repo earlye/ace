@@ -31,7 +31,9 @@
         "g++-6.2.0" : {
             "options": [ "-std=c++17" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
             "library-options" : [ "-Wl,--whole-archive" ],
-            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ]
+            "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ],
+            "linker-coverage-args" : ["--coverage"],
+            "linker-profiler-args" : ["-fprofile-generate"]           
         },
         "clang-703.0.x" : {
             "options" : [ "-std=c++14" , "-I/usr/local/include" ],
@@ -51,6 +53,8 @@
         "clang-1000.0.x" : {
             "options" : [ "-std=c++17" , "-I/usr/local/include", "-I", "/Users/earlye/.ace/include"],
             "library-options" : [ "-Wl,-force_load" ],
+            "linker-coverage-args" : ["-fcoverage-mapping"],
+            "linker-profiler-args" : ["-fprofile-instr-generate"],
             "linker-final-options" : []
         }
     }

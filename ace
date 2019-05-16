@@ -1,1 +1,23 @@
-ace.py
+#!/usr/bin/env bash
+
+ACEDIR=$(dirname "$(test -L "$0" && readlink "$0" || echo "$0")")
+PYENV=$(which pyenv)
+if [[ "${PYENV}" != "" ]]; then
+    # .python-version specifies proper python version    
+    PYTHONVERSION=$(cat ${ACEDIR}/.python-version)
+    PYTHON=$(cd ${ACEDIR} && pyenv which python 2> /dev/null)
+    if [[ "${PYTHON}" == "" ]]; then
+        echo "Python version '${PYTHONVERSION}' is not installed. Run this command: pyenv install ${PYTHONVERSION}"
+        exit 127
+    fi
+else
+    echo "WARNING: Pyenv is the required. See https://github.com/pyenv/pyenv to install"
+    exit 127
+fi
+
+# Run in a subshell so we can switch to the ace directory so pyenv chooses the right python version.
+# Note that relative filename arguments to ace won't work as a consequence :-(
+( STARTDIR=$(pwd);
+  pushd ${ACEDIR}; 
+  ${PYENV} exec python -m pip --disable-pip-version-check install -r requirements.txt | grep -v "already satisfied"; 
+  ${PYENV} exec python ${ACEDIR}/ace.py -d "${STARTDIR}" "$@" )
