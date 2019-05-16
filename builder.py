@@ -436,8 +436,9 @@ class Builder(object) :
         ace_dir=os.path.dirname(os.path.realpath(__file__))
         linker_args=["g++"]
         if self.args.coverage:
-            linker_args.extend(["-fprofile-instr-generate",
-                                "-fcoverage-mapping"])
+            coverageArgs = self.gpp.get("linker-coverage-args",[])
+            print(f"Linking with coverage:{coverageArgs}")
+            linker_args.extend(coverageArgs)
         linker_args.extend(["-g3",
                             "-rdynamic",
                             "-o",".test_harness.exe"]) #,".test_harness.o"])

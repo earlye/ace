@@ -32,7 +32,7 @@
             "options": [ "-std=c++17" , "-Wno-deprecated" , "-pg" ,  "-no-pie", "-rdynamic"],
             "library-options" : [ "-Wl,--whole-archive" ],
             "linker-final-options" : [ "-lpthread","-Wl,--no-whole-archive","-lstdc++fs","-pg","-no-pie", "-rdynamic" ],
-            "linker-coverage-args" : ["--coverage"],
+            "linker-coverage-args" : ["--coverage", "-lgcov" ],
             "linker-profiler-args" : ["-fprofile-generate"]           
         },
         "clang-703.0.x" : {
